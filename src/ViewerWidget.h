@@ -30,7 +30,6 @@ private:
 	OBJECT cube;
 
 public:
-	
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
 	~ViewerWidget();
 	void resizeWidget(QSize size);
@@ -48,12 +47,13 @@ public:
 	bool isInside(int x, int y) { return (x >= 0 && y >= 0 && x < img->width() && y < img->height()) ? true : false; }
 
 	// cube stuff
-	void setUpCube(QVector<QVector3D> points, QVector<QVector<int>> polygons);
-	void setCubePoint(int i, QVector3D new_p, W_EDGE *edge);
+	void setUpCube(QVector<VERTEX> points, QVector<QVector<int>> polygons);
+	void setCubePoint(int i, VERTEX new_p) {	cube.vertices[i] = new_p; }
 	VERTEX getCubePoint(int i) { return cube.vertices[i]; }
+	OBJECT getObject() { return cube; }
 
 	//Draw functions
-	void drawLineDDA(QPoint start, QPoint end, QColor color);
+	void drawLineDDA(VERTEX start, VERTEX end, QColor color);
 	void drawLineBres(QPoint start, QPoint end, QColor color);
 	void setDrawLineBegin(QPoint begin) { drawLineBegin = begin; }
 	QPoint getDrawLineBegin() { return drawLineBegin; }
@@ -113,7 +113,7 @@ public:
 	void scale_circle(float scalar);
 
 	// helping functions
-	void swap_points(QPoint& one, QPoint& two);
+	void swap_points(VERTEX& one, VERTEX& two);
 	float dot_product(QPoint& one, QPoint& two) { return one.x() * two.x() + one.y() * two.y(); }
 	double max(double& one, double& two); 
 	double min(double& one, double& two);

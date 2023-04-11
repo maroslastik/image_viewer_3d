@@ -117,7 +117,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 				return;
 			}
 			
-			redraw_Polygon(vW, w->trim_line());
+			//redraw_Polygon(vW, w->trim_line());
 		}
 		else if(w->get_object_type() == 'p')
 		{
@@ -136,10 +136,11 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 			if (trim)
 			{
 				QVector<QPoint> X = w->trim_polygon(vW->get_polygon());
-				redraw_Polygon(vW, X);
+				//redraw_Polygon(vW, X);
 			}
 			else
-				redraw_Polygon(vW, w->get_polygon());
+				//redraw_Polygon(vW, w->get_polygon()); 
+				return;
 		}
 
 		w->setLastMousePosition(e->pos());
@@ -175,9 +176,11 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 			W = vW->scale_polygon(0.9, 0.9);
 
 		if (vW->get_polygon_length() == 2)
-			redraw_Polygon(vW, vW->trim_line());
+			return;
+		//redraw_Polygon(vW, vW->trim_line());
 		else
-			redraw_Polygon(vW, vW->trim_polygon(W));
+			return;
+			//redraw_Polygon(vW, vW->trim_polygon(W));
 	}
 }
 
@@ -253,12 +256,12 @@ bool ImageViewer::openVTK(ViewerWidget* w, QString filename)
 		return false;
 	}
 
-	QVector<QVector3D> points;
+	QVector<VERTEX> points;
 	for (int i = 0; i < 8; i++) 
 	{
 		double x, y, z;
 		in >> x >> y >> z;
-		points.append(QVector3D(x, y, z));
+		points.append(VERTEX(x, y, z));
 	}
 
 	line = in.readLine().trimmed();
@@ -330,9 +333,16 @@ void ImageViewer::draw_Polygon(ViewerWidget* w, QMouseEvent* e)
 	w->set_object_type('p');*/
 }
 
-void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<QPoint> polyg)
+void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg)
 {
-	w->clear_canvas();
+	//w->clear_canvas();
+	QVector<QPoint> polyg2;
+
+	for (int i = 0; i < polyg.size(); i++)
+	{
+		polyg2.append(QPoint(polyg[i].x, polyg[i].y));
+	}
+
 	for (int i = 0; i < polyg.size(); i++)
 	{
 		w->drawLineDDA(polyg[i], polyg[(i + 1) % polyg.size()], globalColor);
@@ -411,20 +421,19 @@ void ImageViewer::on_actionVTKfile_triggered()
 	}
 }
 
-void ImageViewer::on_kresliButton_clicked(ViewerWidget* w)
+void ImageViewer::on_kresliButton_clicked()
 {
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 6; i++)
 	{
-		QVector<QPoint> polygon;
+		QVector<VERTEX> polygon;
 		for (int j = 0; j < 4; j++)
 		{
-			QPoint point;
-			point.setX(w->getCubePoint(j).x);
-			point.setY(w->getCubePoint(j).y);
-			polygon.push_back(point);
+			//polygon.push_back(vW->getCubePoint((i+j)%8));
+			//polygon.push_back(vW->getCubePoint(i+j));
+			//qDebug() << (i + j) % 8;
+			polygon.push_back(vW->getObject().faces[i].edges[j].P_orig);
 		}
-		qDebug() << "jupi";
-		redraw_Polygon(w, polygon);
+		redraw_Polygon(vW, polygon);
 	}
 }
 
@@ -506,9 +515,11 @@ void ImageViewer::on_symmX_clicked()
 	QVector<QPoint> W = {};
 	W = vW->scale_polygon(-1, 1);
 	if (vW->get_polygon_length() == 2)
-		redraw_Polygon(vW, vW->trim_line());
+		return;
+	//redraw_Polygon(vW, vW->trim_line());
 	else
-		redraw_Polygon(vW, vW->trim_polygon(W));
+		return;
+		//redraw_Polygon(vW, vW->trim_polygon(W));
 }
 
 void ImageViewer::on_symmY_clicked()
@@ -516,9 +527,11 @@ void ImageViewer::on_symmY_clicked()
 	QVector<QPoint> W = {};
 	W = vW->scale_polygon(1, -1);
 	if (vW->get_polygon_length() == 2)
-		redraw_Polygon(vW, vW->trim_line());
+		return;
+	//redraw_Polygon(vW, vW->trim_line());
 	else
-		redraw_Polygon(vW, vW->trim_polygon(W));
+		return;
+		//redraw_Polygon(vW, vW->trim_polygon(W));
 }
 
 void ImageViewer::on_shearDXbutton_clicked()

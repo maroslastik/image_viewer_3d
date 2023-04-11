@@ -139,22 +139,22 @@ void ViewerWidget::setPixels_c(int x, int y, const QColor& color)
 }
 
 //Draw functions
-void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
+void ViewerWidget::drawLineDDA(VERTEX start, VERTEX end, QColor color)
 {
 	double m;
-	if ((double)(end.x() - start.x()) == 0) m = DBL_MAX;
-	else m = (end.y() - start.y()) / (double)(end.x() - start.x());
+	if ((double)(end.x - start.x) == 0) m = DBL_MAX;
+	else m = (end.y - start.y) / (double)(end.x - start.x);
 
 	//riadiaca os je y
 	if (abs(m) >= 1)
 	{
-		if (start.y() > end.y())
+		if (start.y > end.y)
 			swap_points(start, end);
 		// prvy bod, y suradnica je zaokruhlena, x zaokruhlim az pri vykresleni
-		double i[2] = { (double)start.x(), (int)(start.y() + 0.5) };
+		double i[2] = { (double)start.x, (int)(start.y + 0.5) };
 
 		setPixel((int)(i[0] + 0.5), i[1], color);
-		while (i[1] != end.y())
+		while (i[1] != end.y)
 		{
 			i[0] += 1 / m;
 			i[1]++;
@@ -163,13 +163,13 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 	}
 	else
 	{
-		if (start.x() > end.x())
+		if (start.x > end.x)
 			swap_points(start, end);
 		// prvy bod, x suradnica je zaokruhlena, y zaokruhlim az pri vykresleni
-		double i[2] = { (int)(start.x() + 0.5), (double)start.y() };
+		double i[2] = { (int)(start.x + 0.5), (double)start.y };
 
 		setPixel(i[0], (int)(i[1] + 0.5), color);
-		while (i[0] != end.x())
+		while (i[0] != end.x)
 		{
 			i[0]++;
 			i[1] += m;
@@ -189,7 +189,8 @@ void ViewerWidget::drawLineBres(QPoint start, QPoint end, QColor color)
 	if (m >= 1)
 	{
 		if (start.y() > end.y())
-			swap_points(start, end);
+			return;
+			//swap_points(start, end);
 
 		int k1 = 2 * (end.x() - start.x()),
 			k2 = 2 * (end.x() - start.x() - end.y() + start.y()),
@@ -216,7 +217,8 @@ void ViewerWidget::drawLineBres(QPoint start, QPoint end, QColor color)
 	else if (m <= -1)
 	{
 		if (start.y() > end.y())
-			swap_points(start, end);
+			return;
+			//swap_points(start, end);
 
 		int k1 = 2 * (end.x() - start.x()),
 			k2 = 2 * (end.x() - start.x() + end.y() - start.y()),
@@ -243,7 +245,8 @@ void ViewerWidget::drawLineBres(QPoint start, QPoint end, QColor color)
 	else if (m >= 0 && m < 1)
 	{
 		if (start.x() > end.x())
-			swap_points(start, end);
+			return;
+		//swap_points(start, end);
 
 		int k1 = 2 * (end.y() - start.y()),
 			k2 = 2 * (end.y() - start.y() - end.x() + start.x()),
@@ -270,7 +273,8 @@ void ViewerWidget::drawLineBres(QPoint start, QPoint end, QColor color)
 	else
 	{
 		if (start.x() > end.x())
-			swap_points(start, end);
+			return;
+			//swap_points(start, end);
 
 		int k1 = 2 * (end.y() - start.y()),
 			k2 = 2 * (end.y() - start.y() + end.x() - start.x()),
@@ -664,15 +668,18 @@ double ViewerWidget::min(double& one, double& two)
 		return two; 
 }
 
-void ViewerWidget::swap_points(QPoint& one, QPoint& two)
+void ViewerWidget::swap_points(VERTEX& one, VERTEX& two)
 {
-	QPoint tmp;
-	tmp.setX(one.x());
-	tmp.setY(one.y());
-	one.setX(two.x());
-	one.setY(two.y());
-	two.setX(tmp.x());
-	two.setY(tmp.y());
+	VERTEX tmp;
+	tmp.x = one.x;
+	tmp.y = one.y;
+	tmp.z = one.z;
+	one.x = two.x;
+	one.y = two.y;
+	one.z = two.z;
+	two.x = tmp.x;
+	two.y = tmp.y;
+	two.z = tmp.z;
 }
 
 bool ViewerWidget::is_polygon_inside(QVector<QPoint> P)
@@ -700,151 +707,42 @@ void ViewerWidget::clear_canvas()
 	update();
 }
 
-void ViewerWidget::setUpCube(QVector<QVector3D> points, QVector<QVector<int>> polygons)
+void ViewerWidget::setUpCube(QVector<VERTEX> points, QVector<QVector<int>> polygons)
 {
-	// prvotne nacitanie
 	for (int i = 0; i < 8; i++)
 	{
-		cube.vertices.push_back(VERTEX{ points[i].x(), points[i].y(), points[i].z(), nullptr });
+		cube.vertices.append(points[i]);
 	}
 
-	for (int i = 0; i < 4; i++)
-	{
-		cube.edges.push_back(W_EDGE{ &cube.vertices[i], &cube.vertices[(i + 1) % 4], nullptr, nullptr, nullptr, nullptr, nullptr, nullptr });
-	}
-	for (int i = 0; i < 4; i++)
-	{
-		cube.edges.push_back(W_EDGE{ &cube.vertices[i], &cube.vertices[i + 4], nullptr, nullptr, nullptr, nullptr, nullptr, nullptr });
-	}
-	for (int i = 0; i < 4; i++)
-	{
-		cube.edges.push_back(W_EDGE{ &cube.vertices[i + 4], &cube.vertices[(i + 1) % 4 + 4], nullptr, nullptr, nullptr, nullptr, nullptr, nullptr });
-	}
+	cube.edges.resize(12);
+	cube.edges[0] = (EDGE{ cube.vertices[0], cube.vertices[1], 0, 2 });
+	cube.edges[1] = (EDGE{ cube.vertices[1], cube.vertices[2], 0, 5 });
+	cube.edges[2] = (EDGE{ cube.vertices[2], cube.vertices[3], 0, 3 });
+	cube.edges[3] = (EDGE{ cube.vertices[3], cube.vertices[0], 0, 4 });
 
+	cube.edges[4] = (EDGE{ cube.vertices[0], cube.vertices[4], 2, 4 });
+	cube.edges[5] = (EDGE{ cube.vertices[1], cube.vertices[5], 5, 2 });
+	cube.edges[6] = (EDGE{ cube.vertices[2], cube.vertices[6], 3, 5 });
+	cube.edges[7] = (EDGE{ cube.vertices[3], cube.vertices[7], 4, 3 });
+
+	cube.edges[8] = (EDGE{	cube.vertices[4], cube.vertices[5], 2, 1 });
+	cube.edges[9] = (EDGE{	cube.vertices[5], cube.vertices[6], 5, 1 });
+	cube.edges[10] = (EDGE{ cube.vertices[6], cube.vertices[7], 3, 1 });
+	cube.edges[11] = (EDGE{ cube.vertices[7], cube.vertices[4], 4, 1 });
+
+	cube.faces.resize(6);
 	for (int i = 0; i < 6; i++)
 	{
-		W_EDGE* new_edges = new W_EDGE[4];
+		QVector <EDGE> new_edges;
+		new_edges.resize(4);
 		for (int j = 0; j < 4; j++)
 		{
 			new_edges[j] = cube.edges[polygons[i][j]];
 		}
-		cube.faces.push_back(FACE{ new_edges });
+		cube.faces[i] = new_edges;
 	}
-
-	// doplnenie nullptrs
-	int k = 0;
-	for (int i = 0; i < 8; i++)
-	{
-		W_EDGE* new_edges = new W_EDGE[3];
-		for (int j = 0; j < 12; j++)
-		{
-			if (cube.edges[j].vert_origin == &cube.vertices[i] || cube.edges[j].vert_destination == &cube.vertices[i])
-			{
-				new_edges[k] = cube.edges[j];
-				k++;
-				if (k == 3) break;
-			}
-		}
-		cube.vertices[i].edge = new_edges;
-	}
-	// faces
-	{
-		cube.edges[0].face_left = &cube.faces[0];
-		cube.edges[0].face_right = &cube.faces[2];
-		cube.edges[1].face_left = &cube.faces[0];
-		cube.edges[1].face_right = &cube.faces[5];
-		cube.edges[2].face_left = &cube.faces[0];
-		cube.edges[2].face_right = &cube.faces[3];
-		cube.edges[3].face_left = &cube.faces[0];
-		cube.edges[3].face_right = &cube.faces[4];
-		cube.edges[4].face_left = &cube.faces[0];
-		cube.edges[4].face_right = &cube.faces[2];
-		cube.edges[5].face_left = &cube.faces[0];
-		cube.edges[5].face_right = &cube.faces[2];
-		cube.edges[6].face_left = &cube.faces[0];
-		cube.edges[6].face_right = &cube.faces[2];
-		cube.edges[7].face_left = &cube.faces[0];
-		cube.edges[7].face_right = &cube.faces[2];
-		cube.edges[8].face_left = &cube.faces[0];
-		cube.edges[8].face_right = &cube.faces[2];
-		cube.edges[9].face_left = &cube.faces[0];
-		cube.edges[9].face_right = &cube.faces[2];
-		cube.edges[10].face_left = &cube.faces[0];
-		cube.edges[10].face_right = &cube.faces[2];
-		cube.edges[11].face_left = &cube.faces[0];
-		cube.edges[11].face_right = &cube.faces[2];
-	}
-
-	// edges
-	{
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-
-		cube.edges[0].edge_left_prev = &cube.edges[0];
-		cube.edges[0].edge_right_prev = &cube.edges[0];
-		cube.edges[0].edge_left_next = &cube.edges[0];
-		cube.edges[0].edge_right_next = &cube.edges[0];
-	}
-
-	// asi kaslem zatial na toto neviem ci mi to zatial treba :D
+	
 	qDebug() << "ok vsetko";
-}
-
-void ViewerWidget::setCubePoint(int i, QVector3D new_p, W_EDGE* edge)
-{
-	cube.vertices[i] = VERTEX{ new_p.x(),new_p.y(),new_p.z(),edge };
 }
 
 void ViewerWidget::drawCircle(QPoint centre, QPoint radius, QColor color)

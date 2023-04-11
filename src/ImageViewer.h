@@ -41,7 +41,7 @@ private:
 	bool openVTK(ViewerWidget* w, QString filename);
 
 	void draw_Polygon(ViewerWidget* w, QMouseEvent* e);
-	void redraw_Polygon(ViewerWidget* w, QVector<QPoint> polyg);
+	void redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg);
 
 	void draw_circle(ViewerWidget* w, QMouseEvent* e);
 	void redraw_circle(ViewerWidget* w, QPoint centre, QPoint radius);
@@ -59,7 +59,7 @@ private slots:
 	void on_actionExit_triggered();
 	void on_actionImage_triggered();
 	void on_actionVTKfile_triggered();
-	void on_kresliButton_clicked(ViewerWidget* w);
+	void on_kresliButton_clicked();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

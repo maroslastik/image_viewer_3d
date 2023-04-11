@@ -2,35 +2,44 @@
 #include <QtWidgets>
 #include <cmath>
 
-class W_EDGE;
+class FACE;
 
 class VERTEX
 {
 public:
-	double x, y, z;
-	W_EDGE* edge;
+	int x, y, z;
+	VERTEX() {};
+	VERTEX(int n_x, int n_y, int n_z) { x = n_x; y = n_y; z = n_z; }
+};
+
+class EDGE
+{
+public:
+	VERTEX P_orig;
+	VERTEX P_dest;
+	int left_face;
+	int right_face;
+	EDGE() {};
+	EDGE(VERTEX nP1, VERTEX nP2, int nlf, int nrf) { P_orig = nP1; P_dest = nP2;  left_face = nlf; right_face = nrf; }
 };
 
 class FACE
 {
 public:
-	W_EDGE* edge;
-};
-
-class W_EDGE
-{
-public:
-	VERTEX* vert_origin, * vert_destination;
-	FACE* face_left, * face_right;
-	W_EDGE* edge_left_prev, * edge_left_next;
-	W_EDGE* edge_right_prev, * edge_right_next;
+	QVector<EDGE> edges;
+	FACE() {};
+	FACE(QVector<EDGE> n_edges) { edges = n_edges; }
 };
 
 class OBJECT
 {
 public:
-	std::vector<VERTEX> vertices;
-	std::vector<W_EDGE> edges;
-	std::vector<FACE> faces;
+	QVector<VERTEX> vertices;
+	QVector<EDGE> edges;
+	QVector<FACE> faces;
 	OBJECT() {};
+	VERTEX getVertice(int i) { return vertices[i]; }
+    EDGE getEdges(int i) { return edges[i]; }
+    void setEdges(const QVector<EDGE>& newEdges) { edges = newEdges; }
+	void setVertices(const QVector<VERTEX>& newVertices) { vertices = newVertices; }
 };
