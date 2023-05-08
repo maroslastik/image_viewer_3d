@@ -317,13 +317,6 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QRadioButton" name="phongButton">
-          <property name="text">
-           <string>Phongovo</string>
-          </property>
-         </widget>
-        </item>
        </layout>
       </widget>
      </item>

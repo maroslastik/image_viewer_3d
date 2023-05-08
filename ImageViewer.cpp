@@ -359,7 +359,6 @@ void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg, QColor 
 		{
 			polyg[i].x += 250;
 			polyg[i].y += 250;
-			polyg[i].z = 0;
 		}
 	}
 	else if (ui->stredoveButton->isChecked())
@@ -368,11 +367,8 @@ void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg, QColor 
 		w->camera.distance = sz;
 		for (int i = 0; i < polyg.size(); i++)
 		{
-			polyg[i].x = (sz * polyg[i].x) / (sz - polyg[i].z);
-			polyg[i].x += 250;
-			polyg[i].y = (sz * polyg[i].y) / (sz - polyg[i].z);
-			polyg[i].y += 250;
-			polyg[i].z = 0;
+			polyg[i].x = (sz * polyg[i].x) / (sz - polyg[i].z) + 250;
+			polyg[i].y = (sz * polyg[i].y) / (sz - polyg[i].z) + 250;
 		}
 	}
 
@@ -380,6 +376,8 @@ void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg, QColor 
 	{
 		for (int i = 0; i < polyg.size(); i++)
 		{
+			polyg[i].z = 0;
+			polyg[(i + 1) % polyg.size()].z = 0;
 			w->drawLineDDA(polyg[i], polyg[(i + 1) % polyg.size()], globalColor);
 		}
 	}
@@ -387,11 +385,11 @@ void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg, QColor 
 	{
 		if (ui->konstButton->isChecked())
 		{
-			vW->fill_polygon(polyg, color);
+			vW->fill_triangle(polyg, color);
 		}
 		else if (ui->gourButton->isChecked())
 		{
-			vW->fill_polygon(polyg, globalColor);
+			vW->fill_triangle(polyg, globalColor);
 		}
 	}
 }

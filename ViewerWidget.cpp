@@ -16,8 +16,8 @@ ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 		setPainter();
 		setDataPtr();
 		z_buffer = new double[width() * height()];
-		for (int i = 0; i < width() * height(); i++)
-			z_buffer[i] = std::numeric_limits<double>::max();
+		std::fill_n(z_buffer, width() * height(), -std::numeric_limits<double>::max());
+		qDebug() << -std::numeric_limits<double>::max();
 	}
 }
 
@@ -89,67 +89,6 @@ bool ViewerWidget::changeSize(int width, int height)
 	return true;
 }
 
-/*
-void ViewerWidget::setPixel(int x, int y, uchar r, uchar g, uchar b, uchar a)
-{
-	r = r > 255 ? 255 : (r < 0 ? 0 : r);
-	g = g > 255 ? 255 : (g < 0 ? 0 : g);
-	b = b > 255 ? 255 : (b < 0 ? 0 : b);
-	a = a > 255 ? 255 : (a < 0 ? 0 : a);
-
-	size_t startbyte = y * img->bytesPerLine() + x * 4;
-	data[startbyte] = b;
-	data[startbyte + 1] = g;
-	data[startbyte + 2] = r;
-	data[startbyte + 3] = a;
-}
-
-void ViewerWidget::setPixel(int x, int y, double valR, double valG, double valB, double valA)
-{
-	valR = valR > 1 ? 1 : (valR < 0 ? 0 : valR);
-	valG = valG > 1 ? 1 : (valG < 0 ? 0 : valG);
-	valB = valB > 1 ? 1 : (valB < 0 ? 0 : valB);
-	valA = valA > 1 ? 1 : (valA < 0 ? 0 : valA);
-
-	size_t startbyte = y * img->bytesPerLine() + x * 4;
-	data[startbyte] = static_cast<uchar>(255 * valB);
-	data[startbyte + 1] = static_cast<uchar>(255 * valG);
-	data[startbyte + 2] = static_cast<uchar>(255 * valR);
-	data[startbyte + 3] = static_cast<uchar>(255 * valA);
-}
-
-void ViewerWidget::setPixel(int x, int y, const QColor& color)
-{
-	if (color.isValid()) {
-		size_t startbyte = y * img->bytesPerLine() + x * 4;
-
-		data[startbyte] = color.blue();
-		data[startbyte + 1] = color.green();
-		data[startbyte + 2] = color.red();
-		data[startbyte + 3] = color.alpha();
-	}
-}*/
-
-void ViewerWidget::setPixel(int x, int y, float z, const QColor& color)
-{
-	double current_z = z_buffer[y * width() + x];
-	if (z_buffer[y * width() + x] > z)
-	{
-		if(!z_buffer_switch)
-			return;
-	}
-	if (color.isValid())
-	{
-		size_t startbyte = y * img->bytesPerLine() + x * 4;
-
-		data[startbyte] = color.blue();
-		data[startbyte + 1] = color.green();
-		data[startbyte + 2] = color.red();
-		data[startbyte + 3] = color.alpha();
-		z_buffer[y * width() + x] = z;
-	}
-}
-
 void ViewerWidget::setPixels_c(int x, int y, const QColor& color)
 {
 	setPixel(  x,  y, color);
@@ -161,92 +100,6 @@ void ViewerWidget::setPixels_c(int x, int y, const QColor& color)
 	setPixel( -y, -x, color);
 	setPixel( -y,  x, color);
 }
-
-//Draw functions 
-/*
-void ViewerWidget::drawLineDDA(VERTEX start, VERTEX end, QColor color)
-{
-	double m;
-	if ((double)(end.x - start.x) == 0) m = DBL_MAX;
-	else m = (end.y - start.y) / (double)(end.x - start.x);
-
-	//riadiaca os je y
-	if (abs(m) >= 1)
-	{
-		if (start.y > end.y)
-			swap_points(start, end);
-		// prvy bod, y suradnica je zaokruhlena, x zaokruhlim az pri vykresleni
-		double i[3] = { (double)start.x, (int)(start.y + 0.5), (double)start.z};
-
-		setPixel((int)(i[0] + 0.5), i[1], (double)i[2], color);
-		while (i[1] != end.y)
-		{
-			i[0] += 1 / m;
-			i[1]++;
-			setPixel((int)(i[0] + 0.5), i[1], (double)i[2], color);
-		}
-	}
-	else
-	{
-		if (start.x > end.x)
-			swap_points(start, end);
-		// prvy bod, x suradnica je zaokruhlena, y zaokruhlim az pri vykresleni
-		double i[3] = { (int)(start.x + 0.5), (double)start.y, (double)start.z };
-
-		setPixel(i[0], (int)(i[1] + 0.5), (double)i[2], color);
-		while (i[0] != end.x)
-		{
-			i[0]++;
-			i[1] += m;
-			setPixel(i[0], (int)(i[1] + 0.5), (double)i[2], color);
-		}
-	}
-	update();
-}*/
-
-void ViewerWidget::drawLineDDA(VERTEX start, VERTEX end, QColor color)
-{
-	double m;
-	if (end.x - start.x == 0)
-		m = DBL_MAX;
-	else
-		m = static_cast<double>(end.y - start.y) / (end.x - start.x);
-
-	// Determine whether to iterate over x or y
-	if (std::abs(m) >= 1)
-	{
-		if (start.y > end.y)
-			swap_points(start, end);
-
-		double x = start.x;
-		double y = start.y;
-
-		while (y <= end.y)
-		{
-			setPixel(static_cast<int>(x + 0.5), static_cast<int>(y + 0.5), 0, color);
-			x += 1 / m;
-			y++;
-		}
-	}
-	else
-	{
-		if (start.x > end.x)
-			swap_points(start, end);
-
-		double x = start.x;
-		double y = start.y;
-
-		while (x <= end.x)
-		{
-			setPixel(static_cast<int>(x + 0.5), static_cast<int>(y + 0.5), 0, color);
-			x++;
-			y += m;
-		}
-	}
-
-	update();
-}
-
 
 void ViewerWidget::drawLineBres(QPoint start, QPoint end, QColor color)
 {
@@ -544,116 +397,18 @@ QVector<VERTEX> ViewerWidget::trim_left_side(int xmin, QVector<VERTEX> V)
 	}
 	return W;
 }
-/*
-void ViewerWidget::fill_polygon(QVector<VERTEX> polygon, QColor color)
+
+void ViewerWidget::updateZBuffer(int x, int y, double z)
 {
-	if (polygon.size() == 2 || polygon.size() == 1)
+	int index = y * width() + x;
+	if (x >= 0 && x < width() && y >= 0 && y < height())
 	{
-		return;
-	}
-	else if (polygon.size() == 3)
-	{
-		fill_triangle(polygon, color);
-		return;
-	}
-	QVector<VERTEX> T = polygon;
-	QVector<EDGE> edges;
-		
-	// nastavenie hran
-	for (int i = 0; i < T.size(); i++)
-	{
-		VERTEX start = T[i], end = T[(i + 1) % T.size()];
-		// odsrtranenie vodorovnych hran
-		if (start.y == end.y)
-			continue;
-		// smerovanie zhora nadol
-		if (start.y > end.y)
+		if (z < z_buffer[index])
 		{
-			VERTEX temp = start;
-			start = end;
-			end = temp;
-		}
-
-		// odstranenie posledneho bodu
-		end.y -= 1;
-
-		// nastavenie a pridanie hrany do pola hran
-		EDGE edge;
-		edge.start = start;
-		edge.end = end;
-		edge.dy = end.y - start.y;
-		edge.x = (double)start.x;
-		edge.w = (double)(end.x - start.x) / (double)(end.y - start.y);
-		edges.push_back(edge);
-	}
-
-	// zoradenie hran podla y suradnice
-	std::sort(edges.begin(), edges.end(), compareEdgesByStartY);
-
-	// nastavenie y_min a y_max
-	int y_min = edges[0].start.y;
-	int y_max = y_min;
-
-	for (int i = 0; i < edges.size(); i++)
-	{
-		if (edges[i].end.y > y_max)
-		{
-			y_max = edges[i].end.y;
+			z_buffer[index] = z;
 		}
 	}
-
-	// vytvorenie tabulky hran TH
-	QVector<QList<EDGE>> TH;
-	TH.resize(y_max - y_min + 1);
-
-	for (int i = 0; i < edges.size(); i++)
-	{
-		TH[edges[i].start.y - y_min].push_back(edges[i]);
-	}
-
-	QVector<EDGE> ZAH;
-	double y = y_min;
-
-	for (int i = 0; i < TH.size(); i++)
-	{
-		// presuvam z TH do ZAH
-		if (TH[i].size() != 0)
-		{
-			for (int j = 0; j < TH[i].size(); j++)
-			{
-				ZAH.push_back(TH[i][j]);
-			}
-		}
-
-		// zoradenie aktivnych hran podla x
-		std::sort(ZAH.begin(), ZAH.end(), compareEdgesByStartX);
-
-		// kreslenie ciar
-		for (int j = 0; j < ZAH.size(); j += 2)
-		{
-			if (ZAH[j].x != ZAH[j + 1].x)
-			{
-				drawLineDDA(VERTEX{ static_cast<int>(ZAH[j].x + 0.5), static_cast<int>(y) ,0 }, VERTEX{ static_cast<int>(ZAH[j + 1].x + 0.5), static_cast<int>(y), 0 }, color);
-			}
-		}
-
-		// aktualizacia ZAH
-		for (int j = 0; j < ZAH.size(); j++)
-		{
-			if (ZAH[j].dy == 0)
-			{
-				ZAH.remove(j);
-				j--;
-			}
-			else
-			{
-				ZAH[j].x += ZAH[j].w;
-				ZAH[j].dy--;
-			}
-		}
-		y++;
-	}
-}*/
+}
 
 void ViewerWidget::fill_polygon(QVector<VERTEX> polygon, QColor color)
 {
@@ -743,9 +498,6 @@ void ViewerWidget::fill_polygon(QVector<VERTEX> polygon, QColor color)
 		{
 			if (ZAH[j].x != ZAH[j + 1].x)
 			{
-				// Update Z-buffer before drawing
-				updateZBuffer((int)(ZAH[j].x + 0.5), (int)y, ZAH[j].start.z);
-				updateZBuffer((int)(ZAH[j + 1].x + 0.5), (int)y, ZAH[j + 1].start.z);
 				drawLineDDA(
 					VERTEX{ 
 						static_cast<int>(ZAH[j].x + 0.5), 
@@ -779,84 +531,66 @@ void ViewerWidget::fill_polygon(QVector<VERTEX> polygon, QColor color)
 	}
 }
 
-void ViewerWidget::updateZBuffer(int x, int y, double z)
+void ViewerWidget::setPixel(int x, int y, float z, const QColor& color)
 {
-	int index = y * width() + x;
-	if (x >= 0 && x < width() && y >= 0 && y < height())
+	if (z < z_buffer[y * width() + x])
 	{
-		if (z < z_buffer[index])
+		z_buffer[y * width() + x] = z;
+		if (color.isValid())
 		{
-			z_buffer[index] = z;
+			size_t startbyte = y * img->bytesPerLine() + x * 4;
+			data[startbyte] = color.blue();
+			data[startbyte + 1] = color.green();
+			data[startbyte + 2] = color.red();
+			data[startbyte + 3] = color.alpha();
 		}
 	}
 }
-/*
-void ViewerWidget::fill_triangle(QVector<VERTEX> T, QColor color)
+
+void ViewerWidget::drawLineDDA(VERTEX start, VERTEX end, QColor color)
 {
-	std::sort(T.begin(), T.end(),
-		[](VERTEX a, VERTEX b)
+	double m;
+	if (end.x - start.x == 0)
+		m = DBL_MAX;
+	else
+		m = static_cast<double>(end.y - start.y) / (end.x - start.x);
+
+	// Determine whether to iterate over x or y
+	if (std::abs(m) >= 1)
+	{
+		if (start.y > end.y)
+			swap_points(start, end);
+
+		double x = start.x;
+		double y = start.y;
+		double z = start.z;
+		while (y <= end.y)
 		{
-			if ((int)a.y + 0.5 == (int)b.y + 0.5)
-				return a.x < b.x;
-			return a.y < b.y;
-		});
-
-	EDGE e1;
-	EDGE e2;
-	
-	if (T[0].y == T[1].y)
-	{
-		// spodny trojuh
-		e1.start = T[0];
-		e1.end = T[2];
-		e1.w = (double)(T[2].x - T[0].x) / (double)(T[2].y - T[0].y);
-
-		e2.start = T[1];
-		e2.end = T[2];
-		e2.w = (double)(T[2].x - T[1].x) / (double)(T[2].y - T[1].y);
-	}
-	else if (T[1].y == T[2].y)
-	{
-		// horny trojuh
-		e1.start = T[0];
-		e1.end = T[1];
-		e1.w = (double)(T[1].x - T[0].x) / (double)(T[1].y - T[0].y);
-
-		e2.start = T[0];
-		e2.end = T[2];
-		e2.w = (double)(T[2].x - T[0].x) / (double)(T[2].y - T[0].y);
+			setPixel(static_cast<int>(x + 0.5), static_cast<int>(y + 0.5), z, color);
+			x += 1 / m;
+			y++;
+			z += (end.z - start.z) / (end.y - start.y);
+		}
 	}
 	else
 	{
-		// rozdelime a rekurzivne vyplnime
-		double m = (double)(T[2].y - T[0].y) / (double)(T[2].x - T[0].x);
-		VERTEX P{ static_cast<int>((T[1].y - T[0].y) / m + T[0].x), T[1].y ,0 };
+		if (start.x > end.x)
+			swap_points(start, end);
 
-		if (T[1].x < P.x)
-		{
-			fill_triangle({ T[0], T[1], P }, color);
-			fill_triangle({ T[1], P, T[2] }, color);
-		}
-		else
-		{
-			fill_triangle({ T[0], P, T[1] }, color);
-			fill_triangle({ P, T[1], T[2] }, color);
-		}
-		return;
-	}
+		double x = start.x;
+		double y = start.y;
+		double z = start.z;
 
-	double x1 = e1.start.x;
-	double x2 = e2.start.x;
-	for (int y = e1.start.y; y < e1.end.y; y++)
-	{
-		if (x1 != x2)
+		while (x <= end.x)
 		{
-			drawLineDDA(VERTEX{ static_cast<int>(x1 + 0.5), y, 0}, VERTEX(static_cast<int>(x2 + 0.5), y,0), color);
+			setPixel(static_cast<int>(x + 0.5), static_cast<int>(y + 0.5), z, color);
+			x++;
+			y += m;
+			z += (end.z - start.z) / (end.x - start.x);
 		}
-		x1 += e1.w;
-		x2 += e2.w;
 	}
-}*/
+	update();
+}
 
 void ViewerWidget::fill_triangle(QVector<VERTEX> T, QColor color)
 {
@@ -897,7 +631,8 @@ void ViewerWidget::fill_triangle(QVector<VERTEX> T, QColor color)
 	{
 		// rozdelime a rekurzivne vyplnime
 		double m = (double)(T[2].y - T[0].y) / (double)(T[2].x - T[0].x);
-		VERTEX P{ static_cast<int>((T[1].y - T[0].y) / m + T[0].x), T[1].y ,0 };
+		VERTEX P{ static_cast<int>((T[1].y - T[0].y) / m + T[0].x), T[1].y, 0 };
+		P.z = T[0].z + (P.x - T[0].x) * ((T[2].z - T[0].z) / (T[2].x - T[0].x));
 
 		if (T[1].x < P.x)
 		{
@@ -914,15 +649,23 @@ void ViewerWidget::fill_triangle(QVector<VERTEX> T, QColor color)
 
 	double x1 = e1.start.x;
 	double x2 = e2.start.x;
+
+	QVector3D N = QVector3D::crossProduct(
+		QVector3D(e1.end.x - e1.start.x, e1.end.y - e1.start.y, e1.end.z - e1.start.z),
+		QVector3D(e2.end.x - e2.start.x, e2.end.y - e2.start.y, e2.end.z - e2.start.z));
+
+	// e1.start = e2.start = t[0]
+	// e1.end = T[1]
+	// e2.end = T[2]
 	for (int y = e1.start.y; y < e1.end.y; y++)
 	{
 		if (x1 != x2)
 		{
-			// Update Z-buffer before drawing
-			updateZBuffer(static_cast<int>(x1 + 0.5), y, e1.start.z);
-			updateZBuffer(static_cast<int>(x2 + 0.5), y, e2.start.z);
-
-			drawLineDDA(VERTEX{ static_cast<int>(x1 + 0.5), y, 0 }, VERTEX{ static_cast<int>(x2 + 0.5), y, 0 }, color);
+			double Z1 = e1.start.z - ((x1 - e1.start.x) * N.x() + (y - e1.start.y) * N.y()) / N.z(),
+				   Z2 = e2.start.z - ((x2 - e2.start.x) * N.x() + (y - e2.start.y) * N.y()) / N.z();
+			updateZBuffer(static_cast<int>(x1 + 0.5), y, Z1);
+			updateZBuffer(static_cast<int>(x2 + 0.5), y, Z2);
+			drawLineDDA(VERTEX{ static_cast<int>(x1 + 0.5), y, Z1 }, VERTEX{ static_cast<int>(x2 + 0.5), y, Z2 }, color);
 		}
 		x1 += e1.w;
 		x2 += e2.w;
@@ -1089,25 +832,6 @@ void ViewerWidget::scale_circle(float scalar)
 	circle[1] += S;
 }
 
-/*
-bool compareEdgesByStartY(const EDGE& e1, const EDGE& e2)
-{
-	return e1.start.y() < e2.start.y();
-}
-
-bool compareEdgesByStartX(const EDGE& e1, const EDGE& e2)
-{
-	return e1.start.x() < e2.start.x();
-}
-
-bool compareEdgesByStartYX(const QPoint& p1, const QPoint& p2)
-{
-	if (p1.y() == p2.y())
-		return p1.x() < p2.x();
-	return p1.y() < p2.y();
-}
-*/
-
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
 {
@@ -1115,7 +839,7 @@ void ViewerWidget::paintEvent(QPaintEvent* event)
 	QRect area = event->rect();
 	painter.drawImage(area, *img, area);
 }
-/**/
+
 bool compareEdgesByStartY(const EDGE& e1, const EDGE& e2)
 {
 	return e1.start.y < e2.start.y;

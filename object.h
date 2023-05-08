@@ -11,6 +11,14 @@ public:
 	double z;
 	VERTEX() {};
 	VERTEX(int n_x, int n_y, double n_z) { x = n_x; y = n_y; z = n_z; }
+	VERTEX interp(VERTEX& end, double t)
+	{
+		VERTEX res;
+		res.x = x + (end.x - x) * t;
+		res.y = y + (end.y - y) * t;
+		res.z = z + (end.z - z) * t;
+		return res;
+	}
 };
 
 class FACE
@@ -44,4 +52,5 @@ struct EDGE
 	int dy;
 	double x;
 	double w;
+	double wz;
 };
