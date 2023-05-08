@@ -41,7 +41,7 @@ private:
 	bool openVTK(ViewerWidget* w, QString filename);
 
 	void draw_Polygon(ViewerWidget* w, QMouseEvent* e);
-	void redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg);
+	void redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg, QColor color);
 
 	void draw_circle(ViewerWidget* w, QMouseEvent* e);
 	void redraw_circle(ViewerWidget* w, QPoint centre, QPoint radius);
@@ -51,7 +51,6 @@ private:
 private slots:
 	void on_rotateButton_clicked();
 	void on_scaleButton_clicked();
-	void on_fillButton_clicked();
 	void on_symmX_clicked();
 	void on_symmY_clicked();
 	void on_shearDXbutton_clicked();
@@ -65,6 +64,8 @@ private slots:
 	void on_zenitSlider_valueChanged();
 	void on_azimutSlider_valueChanged();
 	void on_szSlider_valueChanged();
+	void onOsvetleneButtonToggled();
+	void onWireframeButtonToggled();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

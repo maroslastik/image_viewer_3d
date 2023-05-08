@@ -7,26 +7,17 @@ class FACE;
 class VERTEX
 {
 public:
-	int x, y, z;
+	int x, y;
+	double z;
 	VERTEX() {};
-	VERTEX(int n_x, int n_y, int n_z) { x = n_x; y = n_y; z = n_z; }
-};
-
-class EDGE
-{
-public:
-	VERTEX* P_orig;
-	VERTEX* P_dest;
-	FACE* left_face;
-	FACE* right_face;
-	EDGE() {};
-	EDGE(VERTEX* nPO, VERTEX* nPD, FACE* nlf, FACE* nrf) { P_orig = nPO; P_dest = nPD;  left_face = nlf; right_face = nrf; }
+	VERTEX(int n_x, int n_y, double n_z) { x = n_x; y = n_y; z = n_z; }
 };
 
 class FACE
 {
 public:
 	QVector<VERTEX*> vertexes;
+	QColor f_color;
 	FACE() {};
 	FACE(QVector<VERTEX*> n_vertex) { vertexes = n_vertex; }
 };
@@ -44,4 +35,13 @@ class CAMERA
 public:
 	double theta, fi;
 	double distance;
+};
+
+struct EDGE
+{
+	VERTEX start;
+	VERTEX end;
+	int dy;
+	double x;
+	double w;
 };

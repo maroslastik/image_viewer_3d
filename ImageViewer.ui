@@ -118,6 +118,12 @@
         </item>
         <item>
          <widget class="QSlider" name="zenitSlider">
+          <property name="minimum">
+           <number>-90</number>
+          </property>
+          <property name="maximum">
+           <number>90</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -197,6 +203,9 @@
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
                <widget class="QSlider" name="szSlider">
+                <property name="minimum">
+                 <number>100</number>
+                </property>
                 <property name="maximum">
                  <number>500</number>
                 </property>
@@ -266,7 +275,7 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
-         <widget class="QRadioButton" name="radioButton_4">
+         <widget class="QRadioButton" name="wireframeButton">
           <property name="text">
            <string>Wire-frame</string>
           </property>
@@ -276,7 +285,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_3">
+         <widget class="QRadioButton" name="osvetleneButton">
           <property name="text">
            <string>Osvetlene</string>
           </property>
@@ -292,7 +301,7 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
-         <widget class="QRadioButton" name="radioButton">
+         <widget class="QRadioButton" name="konstButton">
           <property name="text">
            <string>Konstantne</string>
           </property>
@@ -302,9 +311,16 @@
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_2">
+         <widget class="QRadioButton" name="gourButton">
           <property name="text">
            <string>Gouradovo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="phongButton">
+          <property name="text">
+           <string>Phongovo</string>
           </property>
          </widget>
         </item>

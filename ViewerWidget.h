@@ -33,6 +33,8 @@ private:
 public:
 	CAMERA camera;
 	OBJECT object;
+	double* z_buffer = nullptr;
+	bool z_buffer_switch = true;
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
 	~ViewerWidget();
 	void resizeWidget(QSize size);
@@ -43,10 +45,11 @@ public:
 	bool isEmpty();
 	bool changeSize(int width, int height);
 
-	void setPixel(int x, int y, uchar r, uchar g, uchar b, uchar a = 255);
-	void setPixel(int x, int y, double valR, double valG, double valB, double valA = 1.);
-	void setPixel(int x, int y, const QColor& color);
+	void setPixel(int x, int y, uchar r, uchar g, uchar b, uchar a = 255) {}
+	void setPixel(int x, int y, double valR, double valG, double valB, double valA = 1.) {}
+	void setPixel(int x, int y, const QColor& color) {}
 	void setPixels_c(int x, int y, const QColor& color);
+	void setPixel(int x, int y, float z, const QColor& color);
 	bool isInside(int x, int y) { return (x >= 0 && y >= 0 && x < img->width() && y < img->height()) ? true : false; }
 
 	// object stuff
@@ -80,6 +83,7 @@ public:
 	void set_object_type(char new_ch) { object_type = new_ch; }
 	char get_object_type() { return object_type; }
 
+
 	// drawing polygon
 	void add_to_polygon(QPoint new_p) { polygon.append(new_p); }
 	void set_polygon_point(int i, QPoint new_p) { polygon[i].setX(new_p.x()); polygon[i].setY(new_p.y()); }
@@ -99,10 +103,10 @@ public:
 	QVector<QPoint> scale_polygon(float scalar_x, float scalar_y);
 	QVector<QPoint> shear_polygon(float dx);
 	QVector<QPoint> trim_line();
-	QVector<QPoint> trim_polygon(QVector<QPoint> W);
-	QVector<QPoint> trim_left_side(int xmin, QVector<QPoint> V);
-	void fill_polygon(QColor color);
-	void fill_triangle(QVector<QPoint> T, QColor color);
+	QVector<VERTEX> trim_polygon(QVector<VERTEX> W);
+	QVector<VERTEX> trim_left_side(int xmin, QVector<VERTEX> V);
+	void fill_polygon(QVector<VERTEX> polygon, QColor color);
+	void fill_triangle(QVector<VERTEX> T, QColor color);
 
 	// drawing circle
 	void set_c_centre(QPoint new_p) { circle[0] = new_p; }
@@ -122,6 +126,7 @@ public:
 	double max(double& one, double& two); 
 	double min(double& one, double& two);
 	bool is_polygon_inside(QVector<QPoint> P);
+	void updateZBuffer(int x, int y, double z);
 
 	void clear();
 	void clear_canvas();

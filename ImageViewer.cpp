@@ -22,6 +22,9 @@ ImageViewer::ImageViewer(QWidget* parent)
 	connect(ui->azimutSlider, &QSlider::valueChanged, ui->azimutSpinBox, &QSpinBox::setValue);
 	connect(ui->zenitSlider, &QSlider::valueChanged, ui->zenitSpinBox, &QSpinBox::setValue);
 	connect(ui->szSlider, &QSlider::valueChanged, ui->sz_spinbox, &QSpinBox::setValue);
+
+	connect(ui->osvetleneButton, &QRadioButton::isChecked, this, &ImageViewer::onWireframeButtonToggled);
+	connect(ui->wireframeButton, &QRadioButton::isChecked, this, &ImageViewer::onWireframeButtonToggled);
 }
 
 // Event filters
@@ -94,7 +97,7 @@ void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 }
 
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
-{
+{/*
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 	if (e->buttons() == Qt::LeftButton && !w->get_object_drawn()) {
 
@@ -145,7 +148,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 		}
 
 		w->setLastMousePosition(e->pos());
-	}
+	}*/
 }
 
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event)
@@ -348,7 +351,7 @@ void ImageViewer::draw_Polygon(ViewerWidget* w, QMouseEvent* e)
 	w->set_object_type('p');*/
 }
 
-void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg)
+void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg, QColor color)
 {
 	if (ui->rovnobezneButton->isChecked())
 	{
@@ -372,10 +375,24 @@ void ImageViewer::redraw_Polygon(ViewerWidget* w, QVector<VERTEX> polyg)
 			polyg[i].z = 0;
 		}
 	}
-	
-	for (int i = 0; i < polyg.size(); i++)
+
+	if (ui->wireframeButton->isChecked())
 	{
-		w->drawLineDDA(polyg[i], polyg[(i + 1) % polyg.size()], globalColor);
+		for (int i = 0; i < polyg.size(); i++)
+		{
+			w->drawLineDDA(polyg[i], polyg[(i + 1) % polyg.size()], globalColor);
+		}
+	}
+	else if (ui->osvetleneButton->isChecked())
+	{
+		if (ui->konstButton->isChecked())
+		{
+			vW->fill_polygon(polyg, color);
+		}
+		else if (ui->gourButton->isChecked())
+		{
+			vW->fill_polygon(polyg, globalColor);
+		}
 	}
 }
 
@@ -442,10 +459,12 @@ void ImageViewer::redraw_object()
 			tpoint.z = (point.x * n.x() + point.y * n.y() + point.z * n.z());
 			polygon.push_back(tpoint);
 		}
-		redraw_Polygon(vW, polygon);
+		
+		redraw_Polygon(vW, polygon, vW->object.faces[i]->f_color);
 		polygon.clear();
 	}
 }
+
 //Slots
 void ImageViewer::on_actionImage_triggered()
 {
@@ -488,17 +507,8 @@ void ImageViewer::on_resetButton_clicked()
 	vW->clear_canvas();
 	ui->azimutSlider->setValue(0);
 	ui->zenitSlider->setValue(0);
-
-	for (int i = 0; i < vW->object.faces.size(); i++)
-	{
-		QVector<VERTEX> polygon;
-		for (int j = 0; j < vW->object.faces[i]->vertexes.size(); j++)
-		{
-			VERTEX point = *vW->object.faces[i]->vertexes[j];
-			polygon.push_back(point);
-		}
-		redraw_Polygon(vW, polygon);
-	}
+	ui->szSlider->setValue(250);
+	redraw_object();
 }
 
 void ImageViewer::on_zenitSlider_valueChanged()
@@ -624,7 +634,12 @@ void ImageViewer::on_shearDXbutton_clicked()
 		redraw_Polygon(vW, vW->trim_polygon(W));*/
 }
 
-void ImageViewer::on_fillButton_clicked()
+void ImageViewer::onOsvetleneButtonToggled()
 {
-	vW->fill_polygon(globalColor);
+	vW->z_buffer_switch = true;
+}
+
+void ImageViewer::onWireframeButtonToggled()
+{
+	vW->z_buffer_switch = false;
 }
